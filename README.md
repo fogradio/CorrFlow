@@ -52,7 +52,7 @@ replace the terms for upstream-derived code.
 ## Citation
 
 ```bibtex
-@misc{zhang2026corrflowselfcorrectingflowmatching,
+@misc{zhang2026corrflow,
       title={CorrFlow: Self-Correcting Flow Matching},
       author={Hangwei Zhang and Nathan Rouillé and Chuanxia Zheng},
       year={2026},
