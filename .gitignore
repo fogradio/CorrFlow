@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+image/data/
+image/pretrained_models/
+image/ckpts/
+image/results/
+image/logs/
+image/tmp/
+image/wandb/
+image/sevals/
+**/.caches/
+*.o[0-9]*
+/image/tests/

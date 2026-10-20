@@ -13,7 +13,7 @@
 
 <p align="center">
   <a href="https://fogradio.github.io/corrflow-project/"><b>Project Page</b></a> ·
-  <b>Paper</b> ·
+  <a href="https://arxiv.org/abs/2610.24750"><b>Paper</b></a> ·
   <b>Model</b>
 </p>
 
@@ -35,20 +35,37 @@ The refiner predicts a velocity residual from the base model's clean prediction,
   <img src="assets/method.svg" alt="CorrFlow architecture: a refiner reuses base-model predictions and hidden states to correct the sampling velocity." width="1000">
 </p>
 
+## Image Training and Inference
+
+The image implementation is available in [`image/`](image/README.md), including
+joint DiT/refiner training, sampling, and evaluation.
+See the [setup and usage guide](image/README.md) for dependencies, data,
+and commands.
+
+## Acknowledgements
+
+Our image implementation builds on [RAEv2](https://github.com/nanovisionx/RAEv2).
+We thank the RAEv2 authors for sharing their code and research. Its upstream license is
+preserved in [`image/LICENSE`](image/LICENSE); the root MIT license does not
+replace the terms for upstream-derived code.
+
 ## Citation
 
 ```bibtex
-@misc{zhang2026corrflow,
-  title  = {CorrFlow: Self-Correcting Flow Matching},
-  author = {Zhang, Hangwei and Rouillé, Nathan and Zheng, Chuanxia},
-  year   = {2026},
-  url    = {https://fogradio.github.io/corrflow-project/}
+@misc{zhang2026corrflowselfcorrectingflowmatching,
+      title={CorrFlow: Self-Correcting Flow Matching},
+      author={Hangwei Zhang and Nathan Rouillé and Chuanxia Zheng},
+      year={2026},
+      eprint={2610.24750},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2610.24750},
 }
 ```
 
 ## Release Plan
 
-- [ ] Release image generation training and inference code.
+- [x] Release image generation training and inference code.
 - [ ] Release image generation checkpoints.
 - [ ] Release video generation training and inference code.
 - [ ] Release video generation checkpoints.

@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "table": "paper/tables/imagenet.tex",
+  "expected_shape": [50000, 256, 256, 3],
+  "extractors": ["inception", "convnext", "mae_cls", "siglip_cls", "clip_cls"],
+  "stats_revision": "0227134b29f25704c3856ec002ce4a2183cc7419",
+  "notes": [
+    "Table cells use fdr_<extractor> = raw FD / norm_const, not raw fd_<extractor>.",
+    "Map rows by method/weight name. The guided ep80_ema table row mixes IS/FID from full-ep80_fast and DINOv2 FDr from full-ep80_fast_refiner.",
+    "Evaluate both guided ep80_ema and ep80_fast, with a fresh DINOv2 measurement for each, per the user's follow-up.",
+    "The unguided ep120/ep160 labels are total epochs. Their NPZ filenames use the additional fine-tuning epochs ep40/ep80."
+  ],
+  "rows": [
+    {
+      "id": "noguid-base_ema",
+      "table_method": "noguid-base_ema (80ep)",
+      "npz": "in256-k7-ft-refiner-noguid-base_ema.npz"
+    },
+    {
+      "id": "noguid-ep120_ema",
+      "table_method": "noguid-ep120_ema",
+      "npz": "in256-k7-ft-refiner-noguid-ep40_ema.npz"
+    },
+    {
+      "id": "noguid-ep80+40_ema_refiner",
+      "table_method": "noguid-ep80+40_ema_refiner",
+      "npz": "in256-k7-ft-refiner-noguid-ep40_ema_refiner.npz"
+    },
+    {
+      "id": "noguid-ep160_ema",
+      "table_method": "noguid-ep160_ema",
+      "npz": "in256-k7-ft-refiner-noguid-ep80_ema.npz"
+    },
+    {
+      "id": "noguid-ep80+80_ema_refiner",
+      "table_method": "noguid-ep80+80_ema_refiner",
+      "npz": "in256-k7-ft-refiner-noguid-ep80_ema_refiner.npz"
+    },
+    {
+      "id": "self-flow-ft-noguid-ep120_ema",
+      "table_method": "self-flow-ft-noguid-ep120_ema",
+      "npz": "in256-k7-self-flow-ft-noguid-ep40_ema.npz"
+    },
+    {
+      "id": "self-flow-ft-noguid-ep160_ema",
+      "table_method": "self-flow-ft-noguid-ep160_ema",
+      "npz": "in256-k7-self-flow-ft-noguid-ep80_ema.npz"
+    },
+    {
+      "id": "guid-ep40_ema",
+      "table_method": "in256-k7-ft-refiner-ep40_ema",
+      "npz": "in256-k7-ft-refiner-full-ep40_ema.npz"
+    },
+    {
+      "id": "guid-ep40_ema_refiner",
+      "table_method": "in256-k7-ft-refiner-ep40_ema_refiner",
+      "npz": "in256-k7-ft-refiner-full-ep40_ema_refiner.npz"
+    },
+    {
+      "id": "guid-ep80_ema_refiner",
+      "table_method": "in256-k7-ft-refiner-ep80_ema_refiner",
+      "npz": "in256-k7-ft-refiner-full-ep80_ema_refiner.npz"
+    },
+    {
+      "id": "guid-ep80_ema",
+      "table_method": "in256-k7-ft-refiner-ep80_ema",
+      "npz": "in256-k7-ft-refiner-full-ep80_ema.npz",
+      "additional_extractors": ["dinov2_cls"],
+      "mapping_note": "Uses actual EMA weights. Current table IS=264.97/FID=1.0337 match full-ep80_fast, while FDr-DINOv2=1.0797 matches full-ep80_fast_refiner. Source EMA CSV instead reports IS=266.00213012695315, FID=1.013193497108432, FDr-DINOv2=1.035562187837425."
+    },
+    {
+      "id": "guid-ep80_fast",
+      "table_method": null,
+      "npz": "in256-k7-ft-refiner-full-ep80_fast.npz",
+      "additional_extractors": ["dinov2_cls"],
+      "mapping_note": "Additional fast-weight comparison requested by the user. Source CSV reports IS=264.9724716186523, FID=1.033721232229027, FDr-DINOv2=1.0780003176889046."
+    },
+    {
+      "id": "guid-base_ema",
+      "table_method": "RAEv2 80ep guided (base_ema)",
+      "npz": "in256-k7-ft-refiner-full-base_ema.npz",
+      "mapping_note": "Guided 80-epoch RAEv2 baseline row. The table still carries two-decimal ConvNeXt 0.77 / CLIP 5.21 from the published paper. Source CSV reports IS=260.44397125244143, FID=1.0466813253911482, FDr-DINOv2=1.10197872121264, while the table prints FID 1.0567."
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+# Joint DiT and refiner fine-tuning over the full [0, 1] interval.
+# Stage 1 remains frozen; the DiT uses pretrained weights.
+stage_1:
+  target: stage1.RAE
+  params:
+    encoder_name: dinov3mls-vit-l16[layers=11.13.15.17.19.21.23]
+    resolution: 256
+    decoder_config_path: configs/decoder/ViTXL
+    pretrained_decoder_path: pretrained_models/stage1/imagenet/dinov3l-k7/decoder.pt
+    noise_tau: 0.0
+    normalization_stat_path: pretrained_models/stage1/imagenet/dinov3l-k7/stats.pt
+
+stage_2:
+  target: stage2.models.DDT.DiTwDDTHeadIG
+  params:
+    input_size: 16
+    patch_size: [1, 1]
+    in_channels: 1024
+    hidden_size: [1440, 2048]
+    depth: [28, 2]
+    num_heads: [20, 16]
+    mlp_ratio: 4.0
+    base_model_depth: 8
+  ckpt: pretrained_models/stage2/imagenet/dinov3l-k7/checkpoint.pt
+
+refiner:
+  model:
+    target: stage2.refiner.Refiner
+    params:
+      dim: 768
+      depth: 10
+      num_heads: 12
+      mlp_ratio: 4.0
+      zero_init_output: true
+      normalize_selected_hidden: false
+      inject_selected_hidden: false
+      drop_condition: false
+    # ckpt: ckpts/stage2/<run>/checkpoints/refiner_ep-0000004.pt  # optional warm start
+  selected_layers: [3, 11, 19, 27]   # 1-indexed encoder blocks (of 28)
+  loss_weight: 1.0
+  cosine_lambda: 0.1
+  t_min: 0.0                         # full training interval
+  t_max: 1.0
+  loss_normalize: false              # raw MSE; refiner_rel is the readable monitor
+  grad_to_dit: false
+  input_v_prediction: false
+  clip_grad: 1.0
+  eval_ab: true
+  optimizer:
+    type: gmuon
+    lr: 4.0e-04
+    momentum: 0.95
+    nesterov: true
+    ns_coefficients_preset: POLAR_EXPRESS_COEFFICIENTS
+    ns_use_kernels: false
+    weight_decay: 0.0
+  scheduler:
+    type: linear
+    warmup_epochs: 0.2
+    decay_end_epoch: 80
+    base_lr: 4.0e-04
+    final_lr: 4.0e-05
+    warmup_from_zero: true
+  sampling:
+    scale: 1.0                       # injected after CFG/IG -> no cfg amplification
+    t_min: 0.0
+    t_max: 1.0
+    trust_rho: 0.0
+    use_ema: true
+
+conditioning:
+  type: label
+  cfg_dropout_prob: 0.1
+  arch:
+    num_t_tokens: 4
+    num_c_tokens: 8
+
+transport:
+  prediction: x
+  time_dist_type: logit-normal_0_1
+
+sampler:
+  num_steps: 50
+
+guidance:
+  cfg: {scale: 1.0, t_min: 0.0, t_max: 1.0}
+  ig: {scale: 1.78, t_min: 0.10, t_max: 1.0}
+
+dataset:
+  target: imagenet
+  type: hf
+  data_dir: ${oc.env:IMAGENET_DATA_DIR,data/imagenet-256}
+  split: train
+  condition_type: label
+  shared_tmpdir: ${oc.env:CORRFLOW_TMPDIR,tmp}
+
+training:
+  epochs: 80
+  global_batch_size: 1024
+  # micro = 1024/(8 GPUs * accum). accum=1 -> 128/GPU OOMed on H200 (job 53020:
+  # 135.7 GiB allocated of 139.8 GiB), so accum=2 -> 64/GPU, ~85 GB.
+  # 46 GB cards: accum=8 -> 16/GPU, 39.5 GB measured.
+  # Optimizer steps/epoch stay 1251 whatever this is. See README.md for batch-size settings.
+  grad_accum_steps: 2
+  ema_decay: 0.9995
+  num_workers: 8
+  log_interval: 100
+  checkpoint_interval: 1   # every epoch (1..79) + final ep-0000080; epoch 0 skipped.
+  # 80 x ~12 GB ~= 960 GB -- prune old ones if disk space gets tight.
+  sample_every: 12510
+  clip_grad: 1.0
+  global_seed: 42
+  optimizer:
+    type: gmuon
+    lr: 2.0e-05
+    momentum: 0.95
+    nesterov: true
+    ns_coefficients_preset: POLAR_EXPRESS_COEFFICIENTS
+    ns_use_kernels: false
+    weight_decay: 0.0
+  scheduler:
+    type: linear
+    warmup_epochs: 0.2
+    decay_end_epoch: 80
+    base_lr: 2.0e-05
+    final_lr: 2.0e-06
+    warmup_from_zero: true
+  image_size: 256
+
+eval:
+  eval_interval: 12510
+  eval_model: false
+  eval_dir: results/stage2/eval
+  datasets:
+    imagenet:
+      type: hf
+      data_dir: ${oc.env:IMAGENET_DATA_DIR,data/imagenet-256}
+      split: val
+      condition_type: label
+      num_samples: 10000
+      metrics: [fid, inception_score]
+
+misc:
+  latent_size: [1024, 16, 16]
+  num_classes: 1000
+  time_dist_shift_dim: 262144
+  time_dist_shift_base: 4096
